@@ -18,10 +18,13 @@ npm run dev      # http://localhost:5173
 - `src/lib/filters.ts` — lógica de "agora / hoje / fim de semana", horário e preço.
 - `scraper/` — coleta das ticketeiras. Cada fonte implementa `Source` em `scraper/sources/`.
   - `sympla.ts` lê o payload que a própria página de listagem da Sympla já entrega (com lat/lon).
+  - `ticket360.ts` lê a listagem da cidade e o JSON-LD de cada evento (coordenadas e preço).
+  - `blueticket.ts` usa a API pública da busca do site; endereços são geocodificados pelo Nominatim (`geocode.ts`, com cache em `scraper/.cache`).
   - `classify.ts` categoriza por palavras-chave e descarta o que não é rolê (cursos, palestras…).
 - Cidade configurada em `scraper/output.ts`.
 
 ## Limitações atuais
 
-- Só Sympla por enquanto; preço não vem estruturado na listagem dela, então aparece "não informado".
+- Fontes: Sympla, Ticket360 e Blueticket. Shotgun, Ingresso Rápido e Eventim foram avaliadas e puladas (bloqueio anti-bot / sem resposta).
+- Só a Ticket360 informa preço; nas outras ele aparece como "não informado".
 - Os dados são um JSON estático: precisa rodar `npm run scrape` periodicamente (cron/CI) para atualizar.

@@ -1,10 +1,17 @@
 import type { RoleEvent } from '../src/lib/types'
 import { CITY, OUT, writeEvents } from './output'
+import { saveGeocodeCache } from './geocode'
+import { blueticket } from './sources/blueticket'
 import { sympla } from './sources/sympla'
+import { ticket360 } from './sources/ticket360'
 import type { Source } from './sources/types'
 
-/** adicione novas ticketeiras aqui (Eventim, Ingresso Rápido, Shotgun, Ticket360…) */
-const SOURCES: Source[] = [sympla]
+/**
+ * adicione novas ticketeiras aqui. Avaliadas e puladas (out/2026): Shotgun
+ * (checkpoint anti-bot da Vercel), Ingresso Rápido (fila de espera da
+ * Cloudflare, host inexistente) e Eventim (não responde nem ao robots.txt).
+ */
+const SOURCES: Source[] = [sympla, ticket360, blueticket]
 
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371
@@ -33,6 +40,9 @@ async function main() {
     }
   }
 
+  await saveGeocodeCache()
+  console.log('contagem por fonte:', Object.fromEntries(SOURCES.map((s) => [s.name, all.filter((e) => e.source === s.name).length])))
+
   const now = Date.now()
   const seen = new Set<string>()
   const events = all.filter((e) => {
@@ -48,6 +58,9 @@ async function main() {
 
   await writeEvents(events)
   console.log(`✓ ${events.length} eventos salvos em ${OUT}`)
+  const kept: Record<string, number> = {}
+  for (const e of events) kept[e.source] = (kept[e.source] ?? 0) + 1
+  console.log('  por fonte após filtros:', kept)
 }
 
 main()
